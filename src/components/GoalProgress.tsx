@@ -1,15 +1,18 @@
 import { useMemo } from 'react';
 import { Trophy, Target, TrendingUp, Calendar, Award } from 'lucide-react';
 import type { Goal, WeightRecord, UserProfile } from '../types';
-import { calculateBMI } from '../utils/helpers';
+import { calculateBMI, formatWeight, getWeightLabel } from '../utils/helpers';
 
 interface GoalProgressProps {
   goal: Goal;
   records: WeightRecord[];
   profile?: UserProfile | null;
+  weightUnit?: 'kg' | 'jin';
 }
 
-export function GoalProgress({ goal, records, profile }: GoalProgressProps) {
+export function GoalProgress({ goal, records, profile, weightUnit = 'jin' }: GoalProgressProps) {
+  const unitLabel = getWeightLabel(weightUnit);
+
   const progress = useMemo(() => {
     if (records.length === 0) {
       return null;
@@ -19,7 +22,7 @@ export function GoalProgress({ goal, records, profile }: GoalProgressProps) {
     const startWeight = sorted[0].weight;
     const latestWeight = sorted[sorted.length - 1].weight;
 
-    // Calculate progress percentage
+    // Calculate progress percentage (always in kg for calculation)
     const totalChange = goal.target_weight - startWeight;
     const currentChange = latestWeight - startWeight;
     const progressPercent = totalChange !== 0 ? (currentChange / totalChange) * 100 : 0;
@@ -66,6 +69,9 @@ export function GoalProgress({ goal, records, profile }: GoalProgressProps) {
 
   const targetDate = goal.target_date ? new Date(goal.target_date) : null;
   const today = new Date();
+
+  // Helper to format weight for display
+  const fmtWeight = (weightKg: number) => formatWeight(weightKg, weightUnit);
 
   return (
     <div className="space-y-6">
@@ -119,19 +125,19 @@ export function GoalProgress({ goal, records, profile }: GoalProgressProps) {
           <div className="text-center">
             <p className="text-xs text-muted-plum dark:text-dark-textMuted mb-1">起始</p>
             <p className="text-lg font-heading text-deep-rose dark:text-dark-rose">
-              {progress.startWeight.toFixed(1)}
+              {fmtWeight(progress.startWeight)}
             </p>
           </div>
           <div className="text-center">
             <p className="text-xs text-muted-plum dark:text-dark-textMuted mb-1">当前</p>
             <p className="text-lg font-heading text-deep-rose dark:text-dark-rose">
-              {progress.currentWeight.toFixed(1)}
+              {fmtWeight(progress.currentWeight)}
             </p>
           </div>
           <div className="text-center">
             <p className="text-xs text-muted-plum dark:text-dark-textMuted mb-1">目标</p>
             <p className="text-lg font-heading text-pink-400">
-              {progress.targetWeight.toFixed(1)}
+              {fmtWeight(progress.targetWeight)}
             </p>
           </div>
         </div>
@@ -145,12 +151,12 @@ export function GoalProgress({ goal, records, profile }: GoalProgressProps) {
             <h4 className="font-heading text-deep-rose dark:text-dark-rose">已减重</h4>
           </div>
           <p className="text-3xl font-heading text-sage-500">
-            {Math.abs(progress.weightLost).toFixed(1)}
-            <span className="text-lg ml-1">kg</span>
+            {fmtWeight(Math.abs(progress.weightLost))}
+            <span className="text-lg ml-1">{unitLabel}</span>
           </p>
           {progress.totalToLose > 0 && (
             <p className="text-xs text-muted-plum dark:text-dark-textMuted mt-1">
-              目标: {Math.abs(progress.totalToLose).toFixed(1)} kg
+              目标: {fmtWeight(Math.abs(progress.totalToLose))} {unitLabel}
             </p>
           )}
         </div>
@@ -161,8 +167,8 @@ export function GoalProgress({ goal, records, profile }: GoalProgressProps) {
             <h4 className="font-heading text-deep-rose dark:text-dark-rose">还需</h4>
           </div>
           <p className="text-3xl font-heading text-pink-400">
-            {Math.abs(progress.remainingWeight).toFixed(1)}
-            <span className="text-lg ml-1">kg</span>
+            {fmtWeight(Math.abs(progress.remainingWeight))}
+            <span className="text-lg ml-1">{unitLabel}</span>
           </p>
           <p className="text-xs text-muted-plum dark:text-dark-textMuted mt-1">
             距离目标
@@ -190,7 +196,7 @@ export function GoalProgress({ goal, records, profile }: GoalProgressProps) {
               <div className="text-center">
                 <div className="w-3 h-3 bg-pink-300 rounded-full mx-auto mb-1"></div>
                 <p className="text-muted-plum dark:text-dark-textMuted">起点</p>
-                <p className="font-medium">{progress.startWeight.toFixed(1)} kg</p>
+                <p className="font-medium">{fmtWeight(progress.startWeight)} {unitLabel}</p>
               </div>
 
               <div className={`text-center ${progress.progressPercent >= 50 ? 'opacity-100' : 'opacity-50'}`}>
@@ -199,7 +205,7 @@ export function GoalProgress({ goal, records, profile }: GoalProgressProps) {
                 <p className="font-medium">
                   {progress.progressPercent >= 50
                     ? '已过半'
-                    : `${((progress.startWeight - progress.targetWeight) / 2 + progress.currentWeight).toFixed(1)} kg`}
+                    : `${fmtWeight((progress.startWeight - progress.targetWeight) / 2 + progress.currentWeight)} ${unitLabel}`}
                 </p>
               </div>
 
@@ -208,7 +214,7 @@ export function GoalProgress({ goal, records, profile }: GoalProgressProps) {
                   progress.isAchieved ? 'bg-sage-500' : 'bg-pink-500'
                 }`}></div>
                 <p className="text-muted-plum dark:text-dark-textMuted">目标</p>
-                <p className="font-medium">{progress.targetWeight.toFixed(1)} kg</p>
+                <p className="font-medium">{fmtWeight(progress.targetWeight)} {unitLabel}</p>
               </div>
             </div>
           </div>

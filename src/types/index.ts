@@ -1,14 +1,17 @@
 export interface WeightRecord {
   id: string;
   date: string;        // ISO 8601 date string
-  weight: number;      // kg, 20-300
+  weight: number;      // kg (internal storage), 20-300
   note?: string;
   created_at: string;  // timestamp
 }
 
+export type WeightUnit = 'kg' | 'jin';
+
 export interface UserProfile {
   height: number;      // cm
   gender?: 'male' | 'female';
+  weightUnit?: WeightUnit;  // default: 'jin'
 }
 
 export interface Goal {

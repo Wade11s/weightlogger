@@ -1,8 +1,5 @@
-# data-visualization Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change add-weight-tracker. Update Purpose after archive.
-## Requirements
 ### Requirement: Weight Trend Chart
 The system SHALL provide an interactive line chart displaying weight trends over time, with weights displayed in the user's preferred unit.
 
@@ -63,4 +60,3 @@ The system SHALL display statistical summary information including current weigh
 - **WHEN** 系统计算 BMI
 - **THEN** BMI = 体重(kg) / 身高(m)²（内部始终使用kg计算）
 - **AND** 显示对应的健康状态分类（偏瘦/正常/超重/肥胖）
-

@@ -1,15 +1,18 @@
 import { useMemo } from 'react';
 import { memo } from 'react';
 import type { WeightRecord, UserProfile } from '../types';
-import { calculateBMI, getBMICategory, getBMICategoryColor, filterRecordsByDateRange } from '../utils/helpers';
+import { calculateBMI, getBMICategory, getBMICategoryColor, filterRecordsByDateRange, formatWeight, getWeightLabel } from '../utils/helpers';
 
 interface StatisticsSummaryProps {
   records: WeightRecord[];
   profile?: UserProfile | null;
   days?: number;
+  weightUnit?: 'kg' | 'jin';
 }
 
-function StatisticsSummaryComponent({ records, profile, days }: StatisticsSummaryProps) {
+function StatisticsSummaryComponent({ records, profile, days, weightUnit = 'jin' }: StatisticsSummaryProps) {
+  const unitLabel = getWeightLabel(weightUnit);
+
   const stats = useMemo(() => {
     const filtered = filterRecordsByDateRange(records, days);
 
@@ -62,8 +65,8 @@ function StatisticsSummaryComponent({ records, profile, days }: StatisticsSummar
       <div className="card">
         <p className="text-xs text-muted-plum mb-1">当前体重</p>
         <p className="text-2xl font-heading text-deep-rose">
-          {stats.currentWeight.toFixed(1)}
-          <span className="text-sm text-muted-plum ml-1">kg</span>
+          {formatWeight(stats.currentWeight, weightUnit)}
+          <span className="text-sm text-muted-plum ml-1">{unitLabel}</span>
         </p>
       </div>
 
@@ -71,8 +74,8 @@ function StatisticsSummaryComponent({ records, profile, days }: StatisticsSummar
       <div className="card">
         <p className="text-xs text-muted-plum mb-1">变化</p>
         <p className={`text-2xl font-heading ${stats.weightChange < 0 ? 'text-sage-500' : 'text-red-400'}`}>
-          {stats.weightChange > 0 ? '+' : ''}{stats.weightChange.toFixed(1)}
-          <span className="text-sm ml-1">kg</span>
+          {stats.weightChange > 0 ? '+' : ''}{formatWeight(stats.weightChange, weightUnit)}
+          <span className="text-sm ml-1">{unitLabel}</span>
         </p>
         <p className={`text-xs ${stats.weightChange < 0 ? 'text-sage-500' : 'text-red-400'}`}>
           {stats.weightChangePercent > 0 ? '+' : ''}{stats.weightChangePercent.toFixed(1)}%
@@ -83,8 +86,8 @@ function StatisticsSummaryComponent({ records, profile, days }: StatisticsSummar
       <div className="card">
         <p className="text-xs text-muted-plum mb-1">平均体重</p>
         <p className="text-2xl font-heading text-deep-rose">
-          {stats.avgWeight.toFixed(1)}
-          <span className="text-sm text-muted-plum ml-1">kg</span>
+          {formatWeight(stats.avgWeight, weightUnit)}
+          <span className="text-sm text-muted-plum ml-1">{unitLabel}</span>
         </p>
       </div>
 
@@ -92,7 +95,7 @@ function StatisticsSummaryComponent({ records, profile, days }: StatisticsSummar
       <div className="card">
         <p className="text-xs text-muted-plum mb-1">最低/最高</p>
         <p className="text-lg font-heading text-deep-rose">
-          {stats.minWeight.toFixed(1)} / {stats.maxWeight.toFixed(1)}
+          {formatWeight(stats.minWeight, weightUnit)} / {formatWeight(stats.maxWeight, weightUnit)}
         </p>
       </div>
 

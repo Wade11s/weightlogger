@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { Target } from 'lucide-react';
 import type { Goal } from '../types';
 import { api } from '../services/api';
+import { jinToKg, kgToJin, getWeightLabel, validateWeight } from '../utils/helpers';
 
 interface GoalSettingProps {
   onGoalChange?: (goal: Goal | null) => void;
+  weightUnit?: 'kg' | 'jin';
 }
 
-export function GoalSetting({ onGoalChange }: GoalSettingProps) {
+export function GoalSetting({ onGoalChange, weightUnit = 'jin' }: GoalSettingProps) {
   const [goal, setGoal] = useState<Goal | null>(null);
   const [targetWeight, setTargetWeight] = useState('');
   const [targetDate, setTargetDate] = useState('');
@@ -23,7 +25,8 @@ export function GoalSetting({ onGoalChange }: GoalSettingProps) {
       const goalData = await api.getGoal();
       setGoal(goalData);
       if (goalData) {
-        setTargetWeight(goalData.target_weight.toString());
+        const displayWeight = weightUnit === 'jin' ? kgToJin(goalData.target_weight) : goalData.target_weight;
+        setTargetWeight(displayWeight.toString());
         setTargetDate(goalData.target_date || '');
       }
     } catch (err) {
@@ -38,15 +41,20 @@ export function GoalSetting({ onGoalChange }: GoalSettingProps) {
 
     const weight = parseFloat(targetWeight);
 
-    if (isNaN(weight) || weight < 20 || weight > 300) {
-      setMessage('请输入有效的体重 (20-300kg)');
+    // Validate weight in the display unit
+    const validation = validateWeight(weight, weightUnit);
+    if (!validation.valid) {
+      setMessage(validation.error || '请输入有效的体重');
       setIsSubmitting(false);
       return;
     }
 
     try {
+      // Convert to kg for storage
+      const weightKg = weightUnit === 'jin' ? jinToKg(weight) : weight;
+
       const newGoal: Goal = {
-        target_weight: weight,
+        target_weight: weightKg,
         target_date: targetDate || undefined,
         created_at: goal?.created_at || new Date().toISOString(),
       };
@@ -85,6 +93,11 @@ export function GoalSetting({ onGoalChange }: GoalSettingProps) {
     }
   };
 
+  const unitLabel = getWeightLabel(weightUnit);
+  const minWeight = weightUnit === 'jin' ? 40 : 20;
+  const maxWeight = weightUnit === 'jin' ? 600 : 300;
+  const placeholder = weightUnit === 'jin' ? '130' : '65';
+
   return (
     <div className="space-y-4">
       <div className="card">
@@ -96,7 +109,7 @@ export function GoalSetting({ onGoalChange }: GoalSettingProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="targetWeight" className="block text-deep-rose font-medium mb-2">
-              目标体重 (kg)
+              目标体重 ({unitLabel})
             </label>
             <input
               type="number"
@@ -104,9 +117,9 @@ export function GoalSetting({ onGoalChange }: GoalSettingProps) {
               value={targetWeight}
               onChange={(e) => setTargetWeight(e.target.value)}
               step="0.1"
-              min="20"
-              max="300"
-              placeholder="65"
+              min={minWeight}
+              max={maxWeight}
+              placeholder={placeholder}
               className="input"
               required
             />
@@ -160,7 +173,9 @@ export function GoalSetting({ onGoalChange }: GoalSettingProps) {
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="text-muted-plum">目标体重</span>
-              <span className="font-medium text-deep-rose">{goal.target_weight} kg</span>
+              <span className="font-medium text-deep-rose">
+                {formatWeight(goal.target_weight, weightUnit)} {unitLabel}
+              </span>
             </div>
             {goal.target_date && (
               <div className="flex justify-between">
@@ -175,4 +190,12 @@ export function GoalSetting({ onGoalChange }: GoalSettingProps) {
       )}
     </div>
   );
+}
+
+// Helper function to format weight for display
+function formatWeight(weightKg: number, unit: 'kg' | 'jin'): string {
+  if (unit === 'jin') {
+    return (weightKg * 2).toFixed(1);
+  }
+  return weightKg.toFixed(1);
 }

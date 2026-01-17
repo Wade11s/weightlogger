@@ -1,8 +1,5 @@
-# data-io Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change add-weight-tracker. Update Purpose after archive.
-## Requirements
 ### Requirement: Data Export
 The system SHALL allow users to export weight data to JSON or CSV format files, with weights always stored in kg regardless of user's display preference.
 
@@ -40,21 +37,3 @@ The system SHALL allow users to import weight data from JSON or CSV files with v
 - **AND** 体重值视为 kg 单位
 - **AND** 跳过格式错误的行并记录错误数
 - **AND** 显示导入摘要（成功/失败数量）
-
-### Requirement: Data Backup
-The system SHALL allow users to create full data backups and restore from backup files with confirmation.
-
-#### Scenario: 手动备份
-- **GIVEN** 用户有体重记录
-- **WHEN** 用户选择创建备份
-- **THEN** 系统创建包含所有数据的备份文件
-- **AND** 文件名包含时间戳
-- **AND** 用户选择保存位置
-
-#### Scenario: 恢复备份
-- **GIVEN** 用户有一个备份文件
-- **WHEN** 用户选择恢复备份
-- **THEN** 系统警告将覆盖当前数据
-- **AND** 用户确认后替换所有数据
-- **AND** 显示恢复成功确认
-

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Target } from 'lucide-react';
 import { Sidebar } from './components/Sidebar';
 import { CalendarView } from './components/CalendarView';
@@ -12,10 +12,11 @@ import { ExportData } from './components/ExportData';
 import { ImportData } from './components/ImportData';
 import { BackupRestore } from './components/BackupRestore';
 import { ThemeToggle } from './components/ThemeToggle';
+import { UnitSelector } from './components/UnitSelector';
 import { useToast } from './components/Toast';
 import { api } from './services/api';
-import type { WeightRecord, UserProfile, Goal } from './types';
-import { calculateBMI, getBMICategory, getBMICategoryColor } from './utils/helpers';
+import type { WeightRecord, UserProfile, Goal, WeightUnit } from './types';
+import { calculateBMI, getBMICategory, getBMICategoryColor, formatWeight, getWeightLabel } from './utils/helpers';
 
 type Page = 'dashboard' | 'records' | 'statistics' | 'goals' | 'settings';
 
@@ -29,6 +30,11 @@ function App() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [statsDaysRange, setStatsDaysRange] = useState<number | undefined>(undefined);
   const { showToast, toast } = useToast();
+
+  // Get the current weight unit from profile (default to 'jin')
+  const weightUnit: WeightUnit = useMemo(() => {
+    return profile?.weightUnit || 'jin';
+  }, [profile]);
 
   // Load data on mount
   useEffect(() => {
@@ -88,6 +94,8 @@ function App() {
     const weightChange = latestRecord ? latestRecord.weight - startWeight : 0;
     const bmi = profile && latestRecord ? calculateBMI(latestRecord.weight, profile.height) : null;
 
+    const unitLabel = getWeightLabel(weightUnit);
+
     return (
       <div className="space-y-6">
         <h2 className="text-2xl font-heading text-deep-rose dark:text-dark-rose mb-6">概览</h2>
@@ -97,12 +105,12 @@ function App() {
           <div className="card">
             <p className="text-muted-plum dark:text-dark-textMuted text-sm mb-1">当前体重</p>
             <p className="text-4xl font-heading text-deep-rose dark:text-dark-rose">
-              {latestRecord ? latestRecord.weight.toFixed(1) : '--'}
-              <span className="text-lg text-muted-plum dark:text-dark-textMuted ml-1">kg</span>
+              {latestRecord ? formatWeight(latestRecord.weight, weightUnit) : '--'}
+              <span className="text-lg text-muted-plum dark:text-dark-textMuted ml-1">{unitLabel}</span>
             </p>
             {weightChange !== 0 && (
               <p className={`text-sm mt-2 ${weightChange > 0 ? 'text-red-400' : 'text-sage-500'}`}>
-                {weightChange > 0 ? '+' : ''}{weightChange.toFixed(1)} kg
+                {weightChange > 0 ? '+' : ''}{formatWeight(weightChange, weightUnit)} {unitLabel}
               </p>
             )}
           </div>
@@ -123,7 +131,7 @@ function App() {
           {/* Goal Progress */}
           {goal && (
             <div className="md:col-span-2">
-              <GoalProgress goal={goal} records={records} profile={profile} />
+              <GoalProgress goal={goal} records={records} profile={profile} weightUnit={weightUnit} />
             </div>
           )}
         </div>
@@ -131,7 +139,7 @@ function App() {
         {/* Quick Add */}
         <div className="card">
           <h3 className="text-lg font-heading text-deep-rose dark:text-dark-rose mb-4">快速记录</h3>
-          <RecordForm onSuccess={() => loadData(true)} />
+          <RecordForm onSuccess={() => loadData(true)} weightUnit={weightUnit} />
         </div>
       </div>
     );
@@ -163,6 +171,7 @@ function App() {
           records={records}
           onRecordClick={handleRecordClick}
           onDateClick={handleDateClick}
+          weightUnit={weightUnit}
         />
       </div>
     );
@@ -197,8 +206,8 @@ function App() {
           </div>
         </div>
 
-        <TrendChart records={records} days={statsDaysRange} />
-        <StatisticsSummary records={records} profile={profile} days={statsDaysRange} />
+        <TrendChart records={records} days={statsDaysRange} weightUnit={weightUnit} />
+        <StatisticsSummary records={records} profile={profile} days={statsDaysRange} weightUnit={weightUnit} />
       </div>
     );
   };
@@ -253,14 +262,14 @@ function App() {
 
             <div className="space-y-6">
               <ProfileSetting onProfileChange={handleProfileChange} />
-              <GoalSetting onGoalChange={handleGoalChange} />
+              <GoalSetting onGoalChange={handleGoalChange} weightUnit={weightUnit} />
             </div>
           </div>
         )}
 
         {/* Goal Progress - Always Visible */}
         {currentGoal ? (
-          <GoalProgress goal={currentGoal} records={records} profile={profile} />
+          <GoalProgress goal={currentGoal} records={records} profile={profile} weightUnit={weightUnit} />
         ) : (
           <div className="card-non-interactive text-center py-16">
             <Target className="w-16 h-16 text-muted-plum dark:text-dark-textMuted mx-auto mb-4" />
@@ -282,6 +291,10 @@ function App() {
   };
 
   const SettingsPage = () => {
+    const handleProfileChange = (newProfile: UserProfile) => {
+      setProfile(newProfile);
+    };
+
     return (
       <div className="space-y-6">
         <h2 className="text-2xl font-heading text-deep-rose dark:text-dark-rose mb-6">设置</h2>
@@ -291,6 +304,8 @@ function App() {
             {operationMessage}
           </div>
         )}
+
+        <UnitSelector profile={profile} onProfileChange={handleProfileChange} />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <ImportData
@@ -343,6 +358,7 @@ function App() {
               existingRecord={editingRecord.id ? editingRecord : undefined}
               initialDate={editingRecord.date}
               onSuccess={handleEditSuccess}
+              weightUnit={weightUnit}
             />
             <div className="flex gap-3 mt-4">
               {editingRecord.id && (

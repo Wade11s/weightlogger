@@ -2,20 +2,22 @@ import { useState, useMemo } from 'react';
 import { memo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { WeightRecord } from '../types';
+import { formatWeight, kgToJin } from '../utils/helpers';
 
 interface CalendarViewProps {
   records: WeightRecord[];
   onRecordClick?: (record: WeightRecord) => void;
   onDateClick?: (date: string) => void;
+  weightUnit?: 'kg' | 'jin';
 }
 
-function CalendarViewComponent({ records, onRecordClick, onDateClick }: CalendarViewProps) {
+function CalendarViewComponent({ records, onRecordClick, onDateClick, weightUnit = 'jin' }: CalendarViewProps) {
   // Current viewing month
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
 
-  // Group records by date and calculate changes
+  // Group records by date and calculate changes (always in kg for calculation)
   const calendarData = useMemo(() => {
     const sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date));
     const data = new Map<string, WeightRecord & { change: number; changePercent: number }>();
@@ -89,6 +91,14 @@ function CalendarViewComponent({ records, onRecordClick, onDateClick }: Calendar
 
   const days = getDaysOfMonth(viewYear, viewMonth);
 
+  // Helper to format weight change for display
+  const formatChange = (changeKg: number) => {
+    if (weightUnit === 'jin') {
+      return kgToJin(changeKg);
+    }
+    return changeKg;
+  };
+
   return (
     <div className="space-y-4">
       {/* Month navigation */}
@@ -161,6 +171,8 @@ function CalendarViewComponent({ records, onRecordClick, onDateClick }: Calendar
 
           const isPositive = record.change > 0;
           const isNegative = record.change < 0;
+          const displayWeight = formatWeight(record.weight, weightUnit);
+          const displayChange = formatChange(record.change);
 
           return (
             <div
@@ -184,7 +196,7 @@ function CalendarViewComponent({ records, onRecordClick, onDateClick }: Calendar
 
               {/* Center: weight */}
               <div className="text-xl font-heading text-deep-rose flex-1 flex items-center justify-center">
-                {record.weight.toFixed(1)}
+                {displayWeight}
               </div>
 
               {/* Bottom: change info row */}
@@ -192,7 +204,7 @@ function CalendarViewComponent({ records, onRecordClick, onDateClick }: Calendar
                 {/* Bottom left: weight change */}
                 <div>
                   <span className={isNegative ? 'text-sage-500' : isPositive ? 'text-red-400' : 'text-muted-plum'}>
-                    {isNegative ? '' : isPositive ? '+' : ''}{record.change.toFixed(1)}
+                    {isNegative ? '' : isPositive ? '+' : ''}{displayChange.toFixed(1)}
                   </span>
                 </div>
 

@@ -2,13 +2,15 @@ import { useMemo, useEffect, useRef } from 'react';
 import { memo } from 'react';
 import Plotly from 'plotly.js-dist-min';
 import type { WeightRecord } from '../types';
+import { kgToJin, getWeightLabel } from '../utils/helpers';
 
 interface TrendChartProps {
   records: WeightRecord[];
   days?: number; // 7, 30, or undefined for all
+  weightUnit?: 'kg' | 'jin';
 }
 
-function TrendChartComponent({ records, days }: TrendChartProps) {
+function TrendChartComponent({ records, days, weightUnit = 'jin' }: TrendChartProps) {
   const chartRef = useRef<HTMLDivElement>(null);
 
   // Filter and sort records by date
@@ -30,11 +32,18 @@ function TrendChartComponent({ records, days }: TrendChartProps) {
     }));
   }, [records, days]);
 
+  const unitLabel = getWeightLabel(weightUnit);
+
+  // Convert weights for display
+  const displayWeights = useMemo(() => {
+    return chartData.map(d => weightUnit === 'jin' ? kgToJin(d.weight) : d.weight);
+  }, [chartData, weightUnit]);
+
   // Create Plotly chart
   useEffect(() => {
     if (chartData.length < 2 || !chartRef.current) return;
 
-    const weights = chartData.map(d => d.weight);
+    const weights = displayWeights;
     const dates = chartData.map(d => d.fullDate);
 
     // Calculate min and max for better y-axis range
@@ -63,7 +72,7 @@ function TrendChartComponent({ records, days }: TrendChartProps) {
       },
       hovertemplate:
         '<b>%{x}</b><br>' +
-        '体重: %{y:.1f} kg<extra></extra>',
+        `体重: %{y:.1f} ${unitLabel}<extra></extra>`,
     };
 
     const layout: Partial<Plotly.Layout> = {
@@ -80,7 +89,7 @@ function TrendChartComponent({ records, days }: TrendChartProps) {
         zeroline: false,
       },
       yaxis: {
-        title: { text: '体重 (kg)', font: { size: 14 } },
+        title: { text: `体重 (${unitLabel})`, font: { size: 14 } },
         gridcolor: '#FFD6E0',
         showgrid: true,
         zeroline: false,
@@ -103,7 +112,7 @@ function TrendChartComponent({ records, days }: TrendChartProps) {
         Plotly.purge(chartRef.current);
       }
     };
-  }, [chartData]);
+  }, [chartData, displayWeights, unitLabel]);
 
   // Handle dark mode changes
   useEffect(() => {
@@ -145,7 +154,7 @@ function TrendChartComponent({ records, days }: TrendChartProps) {
     );
   }
 
-  const weights = chartData.map(d => d.weight);
+  const weights = displayWeights;
 
   return (
     <div className="card-non-interactive">
@@ -164,13 +173,13 @@ function TrendChartComponent({ records, days }: TrendChartProps) {
           <div className="p-3 rounded-xl bg-pink-50 dark:bg-dark-input">
             <p className="text-xs text-muted-plum dark:text-dark-textMuted mb-1">最高体重</p>
             <p className="text-lg font-heading text-deep-rose dark:text-dark-rose">
-              {Math.max(...weights).toFixed(1)} kg
+              {Math.max(...weights).toFixed(1)} {unitLabel}
             </p>
           </div>
           <div className="p-3 rounded-xl bg-pink-50 dark:bg-dark-input">
             <p className="text-xs text-muted-plum dark:text-dark-textMuted mb-1">最低体重</p>
             <p className="text-lg font-heading text-deep-rose dark:text-dark-rose">
-              {Math.min(...weights).toFixed(1)} kg
+              {Math.min(...weights).toFixed(1)} {unitLabel}
             </p>
           </div>
           <div className="p-3 rounded-xl bg-pink-50 dark:bg-dark-input">
@@ -180,7 +189,7 @@ function TrendChartComponent({ records, days }: TrendChartProps) {
                 ? 'text-red-400'
                 : 'text-sage-500'
             }`}>
-              {(weights[weights.length - 1] - weights[0]).toFixed(1)} kg
+              {(weights[weights.length - 1] - weights[0]).toFixed(1)} {unitLabel}
             </p>
           </div>
         </div>

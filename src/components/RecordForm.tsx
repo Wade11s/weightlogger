@@ -1,21 +1,30 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import type { WeightRecord } from '../types';
 import { api } from '../services/api';
-import { generateId, getTodayISO, validateWeight } from '../utils/helpers';
+import { generateId, getTodayISO, validateWeight, jinToKg, kgToJin, getWeightLabel } from '../utils/helpers';
 
 interface RecordFormProps {
   onSuccess?: () => void;
   existingRecord?: WeightRecord;
   initialDate?: string;
+  weightUnit?: 'kg' | 'jin';
 }
 
-export function RecordForm({ onSuccess, existingRecord, initialDate }: RecordFormProps) {
+export function RecordForm({ onSuccess, existingRecord, initialDate, weightUnit = 'jin' }: RecordFormProps) {
   const [date, setDate] = useState(existingRecord?.date || initialDate || getTodayISO());
-  const [weight, setWeight] = useState(existingRecord?.weight?.toString() || '');
+  const [weight, setWeight] = useState('');
   const [note, setNote] = useState(existingRecord?.note || '');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Initialize weight input value based on unit
+  useEffect(() => {
+    if (existingRecord?.weight !== undefined) {
+      const displayWeight = weightUnit === 'jin' ? kgToJin(existingRecord.weight) : existingRecord.weight;
+      setWeight(displayWeight.toString());
+    }
+  }, [existingRecord, weightUnit]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,8 +32,8 @@ export function RecordForm({ onSuccess, existingRecord, initialDate }: RecordFor
 
     const weightNum = parseFloat(weight);
 
-    // Validate weight
-    const validation = validateWeight(weightNum);
+    // Validate weight in the display unit
+    const validation = validateWeight(weightNum, weightUnit);
     if (!validation.valid) {
       setError(validation.error || '输入无效');
       return;
@@ -33,10 +42,13 @@ export function RecordForm({ onSuccess, existingRecord, initialDate }: RecordFor
     setIsSubmitting(true);
 
     try {
+      // Convert to kg for storage
+      const weightKg = weightUnit === 'jin' ? jinToKg(weightNum) : weightNum;
+
       const record: WeightRecord = {
         id: existingRecord?.id || generateId(),
         date,
-        weight: weightNum,
+        weight: weightKg,
         note: note.trim() || undefined,
         created_at: existingRecord?.created_at || new Date().toISOString(),
       };
@@ -56,6 +68,11 @@ export function RecordForm({ onSuccess, existingRecord, initialDate }: RecordFor
       setIsSubmitting(false);
     }
   };
+
+  const unitLabel = getWeightLabel(weightUnit);
+  const minWeight = weightUnit === 'jin' ? 40 : 20;
+  const maxWeight = weightUnit === 'jin' ? 600 : 300;
+  const placeholder = weightUnit === 'jin' ? '141' : '70.5';
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -81,7 +98,7 @@ export function RecordForm({ onSuccess, existingRecord, initialDate }: RecordFor
 
       <div>
         <label htmlFor="weight" className="block text-deep-rose font-medium mb-2">
-          体重 (kg)
+          体重 ({unitLabel})
         </label>
         <input
           type="number"
@@ -89,9 +106,9 @@ export function RecordForm({ onSuccess, existingRecord, initialDate }: RecordFor
           value={weight}
           onChange={(e) => setWeight(e.target.value)}
           step="0.1"
-          min="20"
-          max="300"
-          placeholder="70.5"
+          min={minWeight}
+          max={maxWeight}
+          placeholder={placeholder}
           className="input"
           required
         />

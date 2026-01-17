@@ -19,6 +19,8 @@ pub struct UserProfile {
     pub height: f64,         // cm
     #[serde(skip_serializing_if = "Option::is_none")]
     pub gender: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub weight_unit: Option<String>,  // "kg" or "jin"
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

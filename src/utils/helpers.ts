@@ -46,15 +46,25 @@ export function getBMICategoryColor(bmi: number): string {
 }
 
 // Validate weight value
-export function validateWeight(weight: number): { valid: boolean; error?: string } {
+export function validateWeight(weight: number, unit: 'kg' | 'jin' = 'kg'): { valid: boolean; error?: string } {
   if (isNaN(weight)) {
     return { valid: false, error: '请输入有效的数字' };
   }
-  if (weight < 20) {
-    return { valid: false, error: '体重不能小于 20kg' };
-  }
-  if (weight > 300) {
-    return { valid: false, error: '体重不能大于 300kg' };
+  if (unit === 'kg') {
+    if (weight < 20) {
+      return { valid: false, error: '体重不能小于 20kg' };
+    }
+    if (weight > 300) {
+      return { valid: false, error: '体重不能大于 300kg' };
+    }
+  } else {
+    // jin: 40-600 (equivalent to 20-300kg)
+    if (weight < 40) {
+      return { valid: false, error: '体重不能小于 40斤' };
+    }
+    if (weight > 600) {
+      return { valid: false, error: '体重不能大于 600斤' };
+    }
   }
   return { valid: true };
 }
@@ -82,4 +92,28 @@ export function filterRecordsByDateRange<T extends { date: string }>(
   const cutoffISO = cutoffDate.toISOString().split('T')[0];
 
   return records.filter(record => record.date >= cutoffISO);
+}
+
+// Weight unit conversion functions
+// 1 斤 = 0.5 kg
+
+export function kgToJin(weightKg: number): number {
+  return weightKg * 2;
+}
+
+export function jinToKg(weightJin: number): number {
+  return weightJin / 2;
+}
+
+// Format weight for display based on unit
+export function formatWeight(weightKg: number, unit: 'kg' | 'jin'): string {
+  if (unit === 'jin') {
+    return (weightKg * 2).toFixed(1);
+  }
+  return weightKg.toFixed(1);
+}
+
+// Get weight unit label for display
+export function getWeightLabel(unit: 'kg' | 'jin'): string {
+  return unit === 'jin' ? '斤' : 'kg';
 }

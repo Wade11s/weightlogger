@@ -45,9 +45,11 @@ export function ProfileSetting({ onProfileChange }: ProfileSettingProps) {
     }
 
     try {
+      // Preserve existing weightUnit when updating profile
       const newProfile: UserProfile = {
         height: heightNum,
         gender: gender || undefined,
+        weightUnit: profile?.weightUnit || 'jin',  // Preserve existing weight unit
       };
 
       await api.updateProfile(newProfile);

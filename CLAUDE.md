@@ -124,12 +124,34 @@ npm run lint             # Run ESLint validation
 - `src/services/api.ts` - Tauri command invocations (API layer)
 - `src/types/index.ts` - TypeScript interfaces
 - `src/utils/` - Helper functions (BMI calculations, date utilities)
+- `src/contexts/` - React Context (ThemeContext for dark mode)
+
+### Frontend Architecture
+- **State Management**: Lifted to `App.tsx` level, passed via props
+- **Routing**: Simple state-based (no React Router), `Page` type union
+- **Data Loading**: `loadData()` fetches all data on mount, can be called for refresh
+- **Modals**: Inline rendering with conditional display (no modal library)
+- **Theme**: Context-based dark mode toggle with Tailwind `dark:` classes
+- **No tests**: Project has no test framework configured
 
 ### Tauri Commands
 The backend exposes commands that the frontend calls via `src/services/api.ts`:
 - Weight CRUD operations (read, write, delete entries)
 - Profile management (height, gender, target weight)
 - Data import/export (JSON, CSV formats)
+
+### Data Model Architecture
+TypeScript types in `src/types/index.ts` mirror Rust structs in `src-tauri/src/lib.rs`. When modifying data structures, keep both in sync:
+- `WeightRecord` - id, date (ISO 8601), weight (kg, 20-300), note, created_at
+- `UserProfile` - height (cm), gender (male/female)
+- `Goal` - target_weight, target_date, created_at
+- `AppData` - Container for records, profile, goal, version
+
+### Important Business Logic
+- **Record deduplication**: Records are keyed by `date`, not `id`. Saving a record with an existing date overwrites it
+- **Weight validation**: Enforced on Rust backend (20-300 kg range)
+- **Sorting**: Records are always sorted by date descending (newest first)
+- **Data storage**: Single JSON file at `~/.weightlogger/data.json` (macOS) or `C:\Users\<user>\.weightlogger\data.json` (Windows)
 
 ### UI Language
 The application interface is in **Chinese (Simplified)**. When modifying UI text, maintain Chinese language consistency.
