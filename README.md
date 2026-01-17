@@ -2,7 +2,7 @@
 
 一款简单美观的跨平台体重追踪桌面应用，采用 Tauri + React 构建。
 
-> 本项目使用 **Claude Code** + **GLM 4.7** 进行 Vibe Coding 开发。
+> 本项目使用 **Claude Code** + **GLM 4.7** + **OpenSpec** 进行 Vibe Coding 协作开发。
 
 [![Build Desktop Apps](https://github.com/Wade11s/weightlogger/actions/workflows/build.yml/badge.svg)](https://github.com/Wade11s/weightlogger/actions/workflows/build.yml)
 
