@@ -43,6 +43,17 @@
     "longDescription": "A beautiful and simple weight tracking application with data visualization, goal setting, and data import/export features.",
     "macOS": {
       "minimumSystemVersion": "10.13"
+    },
+    "windows": {
+      "wix": {
+        "language": "zh-CN"
+      },
+      "webviewInstallMode": {
+        "type": "embedBootstrapper"
+      },
+      "nsis": {
+        "displayLanguageSelector": false
+      }
     }
   }
 }
