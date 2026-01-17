@@ -23,7 +23,9 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 
 ## Project Overview
 
-**Weight Logger** - A weight tracking application.
+**Weight Logger** - A beautiful cross-platform weight tracking desktop application built with Tauri + React.
+
+**Current Status**: All core features implemented and archived (2026-01-17). The `add-weight-tracker` change has been completed (42/46 tasks, remaining Windows build handled by GitHub Actions).
 
 ## OpenSpec Workflow
 
@@ -114,7 +116,7 @@ npm run lint             # Run ESLint validation
 - **Frontend**: React 19 + TypeScript + Vite
 - **Backend**: Tauri 2.2 (Rust)
 - **UI**: Tailwind CSS with custom rose/sage color palette
-- **Charts**: Recharts for trend visualization
+- **Charts**: Plotly.js for interactive trend visualization
 - **Data Storage**: Local JSON files via Tauri filesystem API
 
 ### Frontend Structure
@@ -132,5 +134,24 @@ The backend exposes commands that the frontend calls via `src/services/api.ts`:
 ### UI Language
 The application interface is in **Chinese (Simplified)**. When modifying UI text, maintain Chinese language consistency.
 
-### Active Development
-Current active change: `add-weight-tracker` (31/46 tasks). View with `openspec show add-weight-tracker`
+### CI/CD
+
+**GitHub Actions** (`.github/workflows/build.yml`):
+- Automatically builds macOS (DMG) and Windows (MSI/NSIS) installers
+- Also provides standalone Windows .exe (no installation, requires WebView2)
+- Triggers on push to main branch or version tags
+- Artifacts available for download from Actions page
+
+### Performance Optimizations
+
+Several components use `React.memo` to prevent unnecessary re-renders:
+- `TrendChart.tsx` - Expensive Plotly.js rendering
+- `CalendarView.tsx` - Complex calendar logic
+- `StatisticsSummary.tsx` - Statistical calculations
+
+### Important Notes
+
+- **No test data in builds**: The `.gitignore` excludes `.weightlogger/` directory
+- **Cross-platform builds**: Use GitHub Actions for automated macOS and Windows builds
+- **Standalone .exe**: Windows artifact includes standalone executable (no install, needs WebView2)
+- **Development complete**: Core features are implemented; new features should follow OpenSpec workflow
